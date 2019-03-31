@@ -1,7 +1,8 @@
 %% Sensor readings computation
 
-function [ sensorArray, sourceArray,sizeOfStudyArea ] = CD1(Q_source,sensorArray)
+function [ sensorArray, sourceArray,sizeOfStudyArea ] = idit_CD1(Q_source,sensorArray)
 
+% ORIGINAL
 %{
 Gets the true leak rates and sensor positions.
 Calculate the true sensor readings according to the Gaussian dispersion model

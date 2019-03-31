@@ -1,0 +1,61 @@
+function [mean_PED_4_5] = PED_mean_4_5(Q_source, sensorArray_recieved)
+
+configFile = Configuration;
+boundery = configFile.GRID_SIZE;
+
+% % option 1 - number of sensors will equal the number of grid points every 10 meters
+% % starting the x location of the source that is most on the right (east)
+% % plus the minimal distance between two sources. 
+% minDist = min(pdist(sourceLocations(:,2))); % minimal distance in Y coordinate 
+% NumOfSens = numel([max(sourceLocations(:,1)) + minDist:10:boundery])*numel([0:10:600]);
+% sensorArray = zeros(NumOfSens,3); % first column x location, second y location, third measured values (currently 0).
+% [X,Y] = meshgrid([max(sourceLocations(:,1)) + minDist:10:boundery],[0:10:600]);
+
+% option 2 - place sensors all over the area
+[X,Y] = meshgrid(0:10:boundery,0:10:boundery);
+
+% Run all 31 options of working/not working stacks (for 5 sources)
+totalField = zeros([size(X) 31]);
+total_active = zeros(31,1);
+for scenario=1:31
+    active = zeros(1,5);
+    for stack=1:5
+        active(stack) = mod(round(scenario/2^stack),2);
+    end
+    [sensorArray, ~, ~] = idit_CD1(Q_source.*active, sensorArray_recieved); 
+    total_active(scenario) = sum(active);
+    totalField(:,:,scenario) = reshape(sensorArray(:,3),size(X));
+end 
+
+% calculate sum of Cr according to CD1 (i.e. calculate PED)
+% my matrix should be 5x31 - for each sensor 
+total_cr = zeros(5,31);
+sensorArray_recieved
+sensorLocations = round([300, 65; 300, 148; 300, 232; 300, 315; 300, 398]./10);
+for i=1:31
+    tempField = squeeze(totalField(:,:,i));
+    cr = tempField(sensorLocations(:,1),sensorLocations(:,2));
+    total_cr(:,i) = cr(1,:);
+end
+
+% calculate PED only for situation of different number of active sources
+total_PED = [];
+total_ind = [];
+for i=1:5
+    ind = find(total_active==i);
+    ind_comp = find(total_active~=i);
+    for j=1:size(ind,1)
+        for k=1:size(ind_comp,1)          
+            total_PED = [total_PED; norm(total_cr(:,ind(j))-total_cr(:,ind_comp(k)))];
+            total_ind = [total_ind ; total_active(ind(j)) total_active(ind_comp(k)) ind(j) ind_comp(k)];
+        end
+    end
+end
+
+% mean_PED
+mean_PED = accumarray(idx,total_PED,[],@mean);
+mean_PED = [c mean_PED];
+out_mean = accumarray([mean_PED(:,1),mean_PED(:,2)],mean_PED(:,3),[5 5]);
+
+end
+

@@ -1,0 +1,45 @@
+function [ objs ] = idit_objective_func_2( x )
+% This is the objective function that is activated by the Borg 
+% It accepts a vector (x) that contains the decision variables and returns the objective values
+
+AccepLeakRate=0;
+NumOfVars=15; % Number of sources (stacks)
+NumOfObj=2; % Number of Objectives (least squares/bias/)
+VarMeans=[1000 1500 600 1900 300];
+
+% % trueSensorReadings contains the real sensor readings. We compute it only in
+% % the first cycle. This is accomplished using the "persistent" keyword. In
+% % the first cycle we also choose leak rate for every source.
+% persistent trueSensorReadings
+% if isempty(trueSensorReadings) % Initialization
+%     % all sources are active
+%     factors = [1.2 0.9 1.05 0.79 1.17]; % true factors for leak rates
+%     Q_source(1:NumOfVars)=factors.*[1000 1500 600 1900 300]; % true leak rates 
+%     
+%     sensorArray = zeros(NumOfSens,3); % first column x location, second y location, third measured values (currently 0). 
+%     sensorArray(1:NumOfSens,1:2)=[300, 65; 300, 148; 300, 232];% 300, 315; 300, 398; 300, 482];   
+%     
+%     % calculate true sensor readings based on true sensor arrays
+%     [sensorArray, sourceArray, sizeOfStudyArea] = idit_CD1(Q_source, sensorArray); % the sensorArray is given to CD1 with locations only (NumOfSensx2) and is returned with values as well (NumOfSensx3)
+%     % try to understand what addGausienNoise gives me
+%     trueSensorReadings = sensorArray;
+%     PlotMap(sensorArray, sourceArray,sizeOfStudyArea);
+%     
+%     save('Results/RealSensors.txt', 'trueSensorReadings','-ascii'); % save true sensor readings   
+%     save('Results/RealSource.txt', 'Q_source', '-ascii') % save true chosen leak rates
+%         
+% end % try to understand what bias gives me
+
+% Conflicting objectives + independent objectives are recommended
+% Computes sensors reading using Asaf's function CD1. 
+[sensorArray, ~, ~] = idit_CD1(x(1:5), reshape(x(6:end),[5 2]));
+objs(1)=0;objs(2)=0;
+
+objs(1) = -PED_mean_4_5(x(1:5), sensorArray);% maximize the PED between 4 and 5 sensors. not sure about the minus sign
+objs(2) = norm(VarMeans - x(1:5)); %minimize the difference between stated values and predicted
+
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

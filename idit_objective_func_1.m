@@ -1,4 +1,4 @@
-function [ objs ] = idit_objective_func( x )
+function [ objs ] = idit_objective_func_1( x )
 % This is the objective function that is activated by the Borg 
 % It accepts a vector (x) that contains the decision variables and returns the objective values
 
@@ -46,7 +46,7 @@ for i=1:size(sensorArray,1)
         %objs(2)=objs(2)+(abs(sensorArray(i,3)-trueSensorReadings(i,3)));
     end
 end
-% ojective 3? don't exceed the factors? only relevant if I run a simulation of one year 
+% ojective 3? 
 objs(3)=size(find(x>AccepLeakRate),2);
 end
 
