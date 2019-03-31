@@ -1,6 +1,6 @@
 %% Sensor readings computation
 
-function [ sensorArray, sourceArray,sizeOfStudyArea ] = CD1( Q_source, sensorArray)
+function [ sensorArray, sourceArray,sizeOfStudyArea ] = CD1(Q_source,sensorArray)
 
 %{
 Gets the true leak rates and sensor positions.
