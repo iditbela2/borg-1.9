@@ -32,10 +32,10 @@ VarMeans=[1000 1500 600 1900 300];
 
 % Conflicting objectives + independent objectives are recommended
 % Computes sensors reading using Asaf's function CD1. 
-[sensorArray, ~, ~] = idit_CD1(x(1:5), reshape(x(6:end),[5 2]));
+
 objs(1)=0;objs(2)=0;
 
-objs(1) = -PED_mean(x(1:5), sensorArray);% maximize the mean PED. not sure about the minus sign
+objs(1) = -PED_mean(x(1:5), reshape(x(6:end),[5 2]));% maximize the mean PED. not sure about the minus sign
 % objs(2) = sum(abs(VarMeans-x(1:5))./VarMeans); %sum of percentage of error
 % objs(2) = norm(VarMeans-x(1:5)); %minimize the difference between stated values and predicted
 % seperate to two errors
@@ -48,7 +48,6 @@ for i=1:size(VarMeans,2)
         objs(3)=objs(3)+(abs(x(i)-VarMeans(i)))/(x(i)+VarMeans(i));
     end
 end
-
 
 % maybe interesting to minimize this norm seperately for each source in
 % order to enable one source to be far from mean values and the other to be
