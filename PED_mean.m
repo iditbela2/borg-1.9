@@ -1,8 +1,9 @@
 function [mean_PED] = PED_mean(Q_source, sensorArray_recieved)
 
+numOfSensors = size(sensorArray_recieved,1);
 % Run all 31 options of working/not working stacks (for 5 sources)
 % and calculate readings 
-totalField = zeros(5,31);
+totalField = zeros(numOfSensors,31);
 total_active = zeros(31,1);
 for scenario=1:31
     active = zeros(1,5);
