@@ -4,7 +4,7 @@ function [ objs ] = idit_objective_func_2( x )
 
 AccepLeakRate=0;
 NumOfVars=15; % Number of sources (stacks)
-NumOfObj=2; % Number of Objectives (least squares/bias/)
+NumOfObj=4; % Number of Objectives (least squares/bias/)
 VarMeans=[1000 1500 600 1900 300];
 
 % % trueSensorReadings contains the real sensor readings. We compute it only in
@@ -35,11 +35,18 @@ VarMeans=[1000 1500 600 1900 300];
 [sensorArray, ~, ~] = idit_CD1(x(1:5), reshape(x(6:end),[5 2]));
 objs(1)=0;objs(2)=0;
 
-objs(1) = -PED_mean_4_5(x(1:5), sensorArray);% maximize the PED between 4 and 5 sensors. not sure about the minus sign
+objs(1) = -PED_mean(x(1:5), sensorArray);% maximize the PED between 4 and 5 sensors. not sure about the minus sign
+% objs(2) = sum(abs(VarMeans-x(1:5))./VarMeans); %sum of percentage of error
 objs(2) = norm(VarMeans - x(1:5)); %minimize the difference between stated values and predicted
 
-end
+% maybe interesting to minimize this norm seperately for each source in
+% order to enable one source to be far from mean values and the other to be
+% close. 
 
+%maximize distance between sensors / minimize variance(equaly distributed) 
+objs(3) = -mean(pdist(sensorArray(:,1:2),'euclidean')); 
+objs(4) = var(pdist(sensorArray(:,1:2),'euclidean'));
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -1,4 +1,4 @@
-function [mean_PED_4_5] = PED_mean_4_5(Q_source, sensorArray_recieved)
+function [mean_PED] = PED_mean(Q_source, sensorArray_recieved)
 
 % Run all 31 options of working/not working stacks (for 5 sources)
 % and calculate readings 
@@ -33,6 +33,6 @@ end
 [c,~,idx] = unique(sort(total_ind(:,[1 2]),2),'rows');
 mean_PED = accumarray(idx,total_PED,[],@mean);
 mean_PED = [c mean_PED];
-mean_PED_4_5 = mean_PED(end,3);
+mean_PED = mean(mean_PED(:,3));
 end
 

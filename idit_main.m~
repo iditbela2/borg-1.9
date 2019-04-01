@@ -10,52 +10,47 @@ NFE=5e3; %the number of objective function evaluations, defines how many times
 eps=[0.5e-3 0.5e-3];
  
 VarMeans=[1000 1500 600 1900 300]; % annual mean values of the stacks
-VarLB=[0*VarMeans ones(1,10)]; % the lower bounds of the decision variables
-VarUB=3*VarMeans; % the upper bounds of the decision variables
+VarLB=[0*VarMeans ones(1,10)*10]; % the lower bounds of the decision variables
+VarUB=[3*VarMeans ones(1,10)*600]; % the upper bounds of the decision variables
 % @idit_objective_func_1 @idit_objective_func_2
 [vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_2, NFE, eps, VarLB, VarUB);
 toc
 
-% NumActive = 5;
-% dimsource=3; %the column you want to sort by. in Shai's problem it is number of active sources
-% VarsAndSourceAccu=[objs vars];
-% VarsAndSourceAccuSort=sortrows(VarsAndSourceAccu,dimsource); 
-% % This array contains the acccuracy defined as the sum of the absulute
-% % negative deviation from ideal readings, sum of the positive deviation
-% % from ideal readings, number of sources and calculated flows. the array is
-% % sortted according to the number of active sources
-% load('RealSource.txt');
- 
-% formatOut='dd_mm_yy_HH_MM';
-% currentFolder = pwd;
-% % DataString = ['C:\Users\ikend\Dropbox\Results\Improving source location\', datestr(now,formatOut) ' Results'];
-% DataString = [currentFolder, '/Results/' datestr(now,formatOut)  'Results'];
-% fig1string=[currentFolder, '/Results/' datestr(now,formatOut) ' fig1'];
-% fig2string=[currentFolder, '/Results/' datestr(now,formatOut) ' fig2'];
-% fig3string=[currentFolder, '/Results/' datestr(now,formatOut) ' fig3'];
-% fig4string=[currentFolder, '/Results/' datestr(now,formatOut) ' fig4'];
-% fig5string=[currentFolder, '/Results/' datestr(now,formatOut) ' fig5'];
-%  
-% Makeplots(VarsAndSourceAccuSort, dimsource,RealSource,NumActive,fig2string,fig3string,fig4string)
-% CorrectNumSource=find(VarsAndSourceAccuSort(:,dimsource)==NumOfVars);
-% if numel(CorrectNumSource)==0
-%     CorrectNumSource=find(VarsAndSourceAccuSort(:,dimsource)==max(VarsAndSourceAccuSort(:,dimsource)));
-% end
-% [BestFlows]=findbest(VarsAndSourceAccuSort, dimsource,CorrectNumSource);
-% GloAccu=sqrt((VarsAndSourceAccuSort(:,1).^2+VarsAndSourceAccuSort(:,2).^2));
-% figure;
-% scatter(RealSource, BestFlows);
-% title( 'BestMatch'); hold on;
-%          ylabel({'Calculated source flow, Kg/second'},'FontSize',12);xlabel({'Actual source flow, Kg/second'},'FontSize',12);
-%         savefig(fig5string);
-% figure;scatter (objs(:,1),objs(:,3));
-% h=gca;
-% set(h,'FontSize',14);
-% ylabel({'Number of sources'},'FontSize',12);xlabel({'Accuracy 1e6ppm'},'FontSize',12);
-% savefig(fig1string)
-% figure;scatter (objs(:,2),objs(:,3));
-% clipboard('copy',DataString);
-% r2=corr2(BestFlows,RealSource);
-%  
-% save(DataString);
-% 
+% look at results
+% (two objectives are not conflicting as far as I understand). 
+
+% scatter
+scatter(objs(:,1),objs(:,2))
+
+% sources locations
+sourceLocations(1,:) = [20, 300]; %first column X location, second column Y location
+sourceLocations(2,:) = [50,470];
+sourceLocations(3,:) = [70,60];
+sourceLocations(4,:) = [110,250];
+sourceLocations(5,:) = [160,520];
+
+% for each vars solution, display sensors+sources locations and values and mean_PED 
+for i=1:size(vars,1)
+    close all
+    figure 
+[~,c] = contour(field,'ShowText','on');
+c.LineWidth = lw;
+set(gca,'XTick',0:5:boundery/10,'XTickLabel',0:50:boundery)
+set(gca,'YTick',0:5:boundery/10,'YTickLabel',0:50:boundery)
+colorbar
+hold on
+plot(meshgrid(0:1:boundery/10,0:1:boundery/10),'k+','MarkerSize',0.5)
+    pause
+end
+
+reshape(vars(1,6:end),[5 2])
+
+
+
+
+% Present the map of dispersion
+field = reshape(sensorArray(:,3),size(X));
+lw = 2.5;
+idit_plotDispersionMap(field, lw, boundery)
+
+
