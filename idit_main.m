@@ -2,12 +2,12 @@ clc; close all; clear all;
  
 tic
 NumOfVars=15; % Number of sources (stacks)
-NumOfObj=4; % Number of Objectives (least squares/bias/)
+NumOfObj=3; % Number of Objectives (least squares/bias/)
 NumOfCons=0; 
 NFE=5e3; %the number of objective function evaluations, defines how many times
 %  the Borg MOEA can invoke objectiveFcn.  Once the NFE limit is reached, the
 %  algorithm terminates and returns the result. 
-eps=[0.5e-3 0.5e-3 0.5e-3 0.5e-3];
+eps=[0.5e-3 0.5e-3 0.5e-3];
  
 VarMeans=[1000 1500 600 1900 300]; % annual mean values of the stacks
 VarLB=[0*VarMeans 160 160 160 160 160 zeros(1,5).*20]; % the lower bounds of the decision variables
