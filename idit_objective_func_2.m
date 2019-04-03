@@ -1,4 +1,4 @@
-function [ objs ] = idit_objective_func_2( x )
+function [ objs, constrs ] = idit_objective_func_2( x )
 % This is the objective function that is activated by the Borg 
 % It accepts a vector (x) that contains the decision variables and returns the objective values
 
@@ -15,9 +15,10 @@ sourceLocations(5,:) = [160,520];
 configFile = Configuration;
 boundery = configFile.GRID_SIZE;
 
+stepSize = 50;
 minDist = min(pdist(sourceLocations(:,2))); % minimal distance in Y coordinate 
-NumOfSens = numel([max(sourceLocations(:,1)) + minDist:10:boundery])*numel([0:10:600]);
-[X,Y] = meshgrid([max(sourceLocations(:,1)) + minDist:10:boundery],[0:10:600]);
+NumOfSens = numel([max(sourceLocations(:,1)) + minDist:stepSize:boundery])*numel([0:stepSize:600]);
+[X,Y] = meshgrid([max(sourceLocations(:,1)) + minDist:stepSize:boundery],[0:stepSize:600]);
 
 % order of sensors (notice Y is zero on the top of matrix)
 sensorArray = zeros(NumOfSens,3); % first column x location, second y location, third measured values (currently 0).
@@ -28,17 +29,22 @@ sensorArray(1:NumOfSens,2)=reshape(Y,[size(Y,1)*size(Y,2),1]);
 Q_source = [1000 1500 600 1900 300];
 % % [sensorArray, ~, ~] = idit_CD1(Q_source, sensorArray); 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-thr = 0.99; %above this threshold the sensor is active, below it is not
+thr = 0.7; %above this threshold the sensor is active, below it is not
 % objective 1 - minimize number of active sensors
-objs(1)=sum(find(x>thr));
+objs(1)=sum(x>thr);
 
-% cons = 10;
-% constrs = 0; 
-% if objs(1)>cons
-%     constrs = 1;       
+% minimum two sensors
+cons1 = 2;
+% cons2 = 15;
+constrs(1) = 0; 
+% constrs(2) = 0; 
+if objs(1)<cons1
+    constrs(1) = 1;       
+end
+% if objs(1)>cons2
+%     constrs(2) = 1;       
 % end
 % objective 2 - maximize mean PED, given locations of active sensors
 objs(2) = -PED_mean(Q_source, sensorArray(x>thr,1:2)); % source locations are defined in idit_CD1

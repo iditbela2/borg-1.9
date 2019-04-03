@@ -13,40 +13,42 @@ sourceLocations(5,:) = [160,520];
 configFile = Configuration;
 boundery = configFile.GRID_SIZE;
 
+stepSize = 50;
 minDist = min(pdist(sourceLocations(:,2))); % minimal distance in Y coordinate 
-NumOfSens = numel([max(sourceLocations(:,1)) + minDist:10:boundery])*numel([0:10:600]);
-[X,Y] = meshgrid([max(sourceLocations(:,1)) + minDist:10:boundery],[0:10:600]);
+NumOfSens = numel([max(sourceLocations(:,1)) + minDist:stepSize:boundery])*numel([0:stepSize:600]);
+[X,Y] = meshgrid([max(sourceLocations(:,1)) + minDist:stepSize:boundery],[0:stepSize:600]);
 
 % order of sensors (notice Y is zero on the top of matrix)
 sensorArray = zeros(NumOfSens,3); % first column x location, second y location, third measured values (currently 0).
 sensorArray(1:NumOfSens,1)=reshape(X,[size(X,1)*size(X,2),1]);
 sensorArray(1:NumOfSens,2)=reshape(Y,[size(Y,1)*size(Y,2),1]);
 
-% calculate sensor readings based on known Q_source 
-Q_source = [1000 1500 600 1900 300];
-[sensorArray, ~, ~] = idit_CD1(Q_source, sensorArray); 
+% % % calculate sensor readings based on known Q_source 
+% % Q_source = [1000 1500 600 1900 300];
+% % [sensorArray, ~, ~] = idit_CD1(Q_source, sensorArray); 
 
 tic
-NumOfVars=NumOfSens; % Number of sources (stacks)
+NumOfVars=NumOfSens; % Number of sensors
 NumOfObj=2; % Number of Objectives (least squares/bias/)
-NumOfCons=0; 
+NumOfCons=1; 
 NFE=5e3; %the number of objective function evaluations, defines how many times
 %  the Borg MOEA can invoke objectiveFcn.  Once the NFE limit is reached, the
 %  algorithm terminates and returns the result. 
-eps=[0.5e-3 0.5e-3];
+eps=[1 0.5e-8];
  
-% VarMeans=[1000 1500 600 1900 300]; % annual mean values of the stacks
+VarMeans=[1000 1500 600 1900 300]; % annual mean values of the stacks
 % VarLB=[0*VarMeans 160 160 160 160 160 zeros(1,5).*20]; % the lower bounds of the decision variables
 % VarUB=[3*VarMeans ones(1,10).*580]; % the upper bounds of the decision variables
-% VarLB=[0*VarMeans 160 160 160 160 160 zeros(1,5).*20]; % the lower bounds of the decision variables
-% VarUB=[3*VarMeans ones(1,10).*580]; % the upper bounds of the decision variables
+VarLB=zeros(1,NumOfSens); % the lower bounds of the decision variables
+VarUB=ones(1,NumOfSens); % the upper bounds of the decision variables
 
 % @idit_objective_func_1 @idit_objective_func_2
 [vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_2, NFE, eps, VarLB, VarUB);
 toc
 
 % look at results
-% (two objectives are not conflicting as far as I understand). 
+
+% option 1 - 
 
 % scatter
 scatter(objs(:,1),objs(:,2))
@@ -66,8 +68,105 @@ for i=1:size(vars,1)
 
     hold on
     sensorLocations = reshape(round(vars(i,6:end)),[5 2]);
-    plot(sensorLocations(:,1),sensorLocations(:,2),'bx')
+    plot(sensorLocations(:,2),sensorLocations(:,1),'bx') % is there a X Y problem here?
     title(['PED = ' num2str(-objs(i,1))]);
     pause
 end
+
+% option 2 - 
+% If I increase epsilon, I get less solutions, but with lower number of
+% sensors. if I lower the epsilon value, I get more solutions but higher
+% number of sensors. Increasing the threshold decreases the number of
+% sensors and give solutions with variability in the number of sensors. I
+% can't seem to find variability in the PED values. ok results - eps 0.5e-6/0.5e-8, thr 0.65/0.7, median 
+% I should understand if the fact that it wants to maximize PED, won't lead
+% to unrealistic placement - like no sensor at all in front of one of the
+% stacks. 
+thr = 0.7;
+str_mean = strtrim(cellstr(num2str(VarMeans'))');
+[objsSorted,ind] = sortrows(objs);
+varsSorted = vars(ind,:);
+for i=1:size(varsSorted,1)
+    close all
+    figure 
+    plot(sourceLocations(:,1),sourceLocations(:,2),'ro')
+    text(sourceLocations(:,1)+5,sourceLocations(:,2),str_mean)
+    xlim([0 600])
+    ylim([0 600])
+
+    hold on
+    sensorLocations = sensorArray(varsSorted(i,:)>thr,1:2);
+    plot(sensorLocations(:,1),sensorLocations(:,2),'bx')% is there a X Y problem here?
+    title(['PED = ' num2str(-objsSorted(i,2)) ', No of sensors: '  num2str(objsSorted(i,1))]);    
+    pause
+end
+
+% SAVE PLOTS OF RESULTS
+% (1) scatter of results 
+scatter(objs(:,1),-objs(:,2),'filled')
+title('Pareto front','fontsize',14)
+xl = xlabel('Number of sensors','fontsize',14);
+yl = ylabel('Minimal PED in each group of scenarios','fontsize',14);
+xl.Position(2) = -0.015;  % Shift x label down
+yl.Position(1) = 0.20;  % Shift y label left
+saveas(gcf,['results_pareto_front.png'])
+
+% (2) display also PED matrices for each solution up to 10 sensors
+% call PED_mean without it's last line (mean)
+Q_source = [1000 1500 600 1900 300];
+
+thr = 0.7;
+str_mean = strtrim(cellstr(num2str(VarMeans'))');
+[objsSorted,ind] = sortrows(objs);
+varsSorted = vars(ind,:);
+for i=1:sum(objsSorted(:,1)<=10)
+    subplot(1,2,1)
+    plot(sourceLocations(:,1),sourceLocations(:,2),'ro')
+    text(sourceLocations(:,1)+5,sourceLocations(:,2),str_mean)
+    xlim([0 600])
+    ylim([0 600])
+
+    hold on
+    sensorLocations = sensorArray(varsSorted(i,:)>thr,1:2);
+    plot(sensorLocations(:,1),sensorLocations(:,2),'bx')
+    title(['PED = ' num2str(-objsSorted(i,2)) ', No of sensors: '  num2str(objsSorted(i,1))]);  
+    subplot(1,2,2)
+    min_PED = PED_mean(Q_source, [sensorLocations(:,1),sensorLocations(:,2)]);
+    out_min = accumarray([min_PED(:,1),min_PED(:,2)],min_PED(:,3),[5 5]);
+    imagesc(out_min)
+    colorbar
+    title('min PED');
+    set(gca,'YTick',1:5) 
+    print -r500 % set resolution
+    set(gcf, 'PaperUnits', 'centimeters','PaperPosition', [0 0 20 10]);%x_width=20cm y_width=10cm
+    saveas(gcf,['results_' num2str(i) '.png'])
+    pause
+end
+
+% (3) run borg (idit_objective_func_1) to find emissions. calculate error rates for the different
+% number of sensors placed. 
+
+clear all
+tic
+NumOfVars=5; % Number of sources (stacks)
+NumOfObj=2; % Number of Objectives (least squares/bias/)
+NumOfCons=0; 
+NFE=5e3; %the number of objective function evaluations, defines how many times
+%  the Borg MOEA can invoke objectiveFcn.  Once the NFE limit is reached, the
+%  algorithm terminates and returns the result. 
+eps=[0.5e-8 0.5e-8];
+ 
+VarMeans=[1000 1500 600 1900 300]; % annual mean values of the stacks
+% VarLB=[0*VarMeans 160 160 160 160 160 zeros(1,5).*20]; % the lower bounds of the decision variables
+% VarUB=[3*VarMeans ones(1,10).*580]; % the upper bounds of the decision variables
+VarLB=zeros(1,NumOfVars); % the lower bounds of the decision variables
+VarUB=3.*VarMeans.*ones(1,NumOfVars); % the upper bounds of the decision variables
+
+% @idit_objective_func_1 @idit_objective_func_2
+[vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_1, NFE, eps, VarLB, VarUB);
+toc
+
+
+
+
 
