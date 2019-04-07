@@ -1,6 +1,6 @@
 %% Sensor readings computation
 
-function [ sensorArray, sourceArray,sizeOfStudyArea ] = idit_CD1(Q_source,sensorArray)
+function [ sensorArray, sourceArray,sizeOfStudyArea ] = idit_CD1(Q_source,sensorArray, WD, WS)
 
 % ORIGINAL
 %{
@@ -12,9 +12,11 @@ now1 = {'Start run on:', datestr(now)};
 
 % clearvars;
 svAPI = API;
-configFile = Configuration;
+svAPI.configFile.WIND_DIRECTION = WD;
+svAPI.configFile.WIND_SPEED = WS;
+% configFile = Configuration;
 
-sizeOfStudyArea = configFile.GRID_SIZE;
+% sizeOfStudyArea = configFile.GRID_SIZE;
 
 % Source locations
 x_source1 = 20;
@@ -33,8 +35,8 @@ x_source5 = 160;
 y_source5 = 520;
 
 
-windSpeed  = configFile.WIND_SPEED; % m/sec
-windDirection  =  configFile.WIND_DIRECTION;
+% windSpeed  = configFile.WIND_SPEED; % m/sec
+% windDirection  =  configFile.WIND_DIRECTION;
 
 sourceArray = [x_source1, y_source1, Q_source(1); x_source2, y_source2, Q_source(2); ...
     x_source3, y_source3, Q_source(3); x_source4, y_source4, Q_source(4); ...

@@ -53,81 +53,81 @@ classdef API
                 d= (abs(-m*x0 + y0 - n))/(sqrt(m^2 +1));
             end
              
-            %calculate source concentration Gaussian model
-            function [Q]  = calculateSourceCon(obj,x_sen, y_sen, x_source, y_source,sensorCon)
-                
-                C = sensorCon;
-                U = obj.configFile.WIND_SPEED;%sourceSpeed;
-                wind_direction = obj.configFile.WIND_DIRECTION;
-                %effective stack height, aribtrrary 
-                He = obj.configFile.EFFECTIVE_HEIGHT;
-                grid_scale = obj.configFile.GRID_SCALE;
-                % first: calculate the distance between the source and
-                % sensor
-                
-                %we only deal with west winds, so
-                %in case the source is in front of the sensor, i.e. only
-                %east wind can reach it,so this is irrelevant case and the
-                %function should exit.                
-                if(x_sen <= x_source)
-                    Q = 0;
-                    return
-                end
-                
-                if(C == 0)
-                    Q = 0;
-                    return
-                end
-                
-                %X distance: In meters
-               % x_distance_kilometers  = (x_sen-x_source);
-                
-                x_distance_meters  = obj.distance(x_sen, y_sen, x_source, y_source)*grid_scale;
-                
-                x_distance_kilometers  = x_distance_meters/1000;
-                
-                %the slope of the wind direction refere to X axis
-                mWD = obj.getCurveByWindDirection(wind_direction);%hCon.WIND_DIRECTION);
-                
-                %get the line equation of the wind, based on two point (the
-                %source) and the slope
-                [mWD,nWD] =  obj.getLineEquation(x_source, y_source, mWD);
-                
-                %calculate the distance between the sensor and the line
-                %equation of the wind direction
-                y_distance = obj.getDistanceFromPointToLine(mWD,nWD,x_sen, y_sen);
-                
-                %in meters
-                y_distance =  y_distance*grid_scale;
-                
-                
-                %## calculate sigma y and sigma z ##%
-                
-                  %sigma_y = a*x^0.894; a depend on wheather conditions
-                  % for now I choose stability category C (see presentation)
-                  a = 104;
-                  c = 61;
-                  d = 0.911 ;
-                  f = 0;
-                  
-                  
-                   sigma_y =  a*x_distance_kilometers^0.894; 
-                   %sigma_z = c*x^d + f; c,d,f depends on wheather conditions                 
-                   sigma_z = c*x_distance_kilometers^d + f; 
-                
-                
-               
- 
-%                 expy = exp(-(y_distance^2)/(2*sigma_y^2));
-
-%                 expH = exp(-(He^2)/(2*sigma_z^2));
-%                 windParam = (U*sigma_y*sigma_z*pi);
-                
-                %Q = (C*windParam)/(expy* expH);
-                Q = C*(U*sigma_y*sigma_z*pi)/(exp(-(y_distance^2)/(2*sigma_y^2))*exp(-(He^2)/(2*sigma_z^2)));
-                
-            % end of function    
-            end
+% %             %calculate source concentration Gaussian model
+% %             function [Q]  = calculateSourceCon(obj,x_sen, y_sen, x_source, y_source,sensorCon)
+% %                 
+% %                 C = sensorCon;
+% %                 U = obj.configFile.WIND_SPEED;%sourceSpeed;
+% %                 wind_direction = obj.configFile.WIND_DIRECTION;
+% %                 %effective stack height, aribtrrary 
+% %                 He = obj.configFile.EFFECTIVE_HEIGHT;
+% %                 grid_scale = obj.configFile.GRID_SCALE;
+% %                 % first: calculate the distance between the source and
+% %                 % sensor
+% %                 
+% %                 %we only deal with west winds, so
+% %                 %in case the source is in front of the sensor, i.e. only
+% %                 %east wind can reach it,so this is irrelevant case and the
+% %                 %function should exit.                
+% %                 if(x_sen <= x_source)
+% %                     Q = 0;
+% %                     return
+% %                 end
+% %                 
+% %                 if(C == 0)
+% %                     Q = 0;
+% %                     return
+% %                 end
+% %                 
+% %                 %X distance: In meters
+% %                % x_distance_kilometers  = (x_sen-x_source);
+% %                 
+% %                 x_distance_meters  = obj.distance(x_sen, y_sen, x_source, y_source)*grid_scale;
+% %                 
+% %                 x_distance_kilometers  = x_distance_meters/1000;
+% %                 
+% %                 %the slope of the wind direction refere to X axis
+% %                 mWD = obj.getCurveByWindDirection(wind_direction);%hCon.WIND_DIRECTION);
+% %                 
+% %                 %get the line equation of the wind, based on two point (the
+% %                 %source) and the slope
+% %                 [mWD,nWD] =  obj.getLineEquation(x_source, y_source, mWD);
+% %                 
+% %                 %calculate the distance between the sensor and the line
+% %                 %equation of the wind direction
+% %                 y_distance = obj.getDistanceFromPointToLine(mWD,nWD,x_sen, y_sen);
+% %                 
+% %                 %in meters
+% %                 y_distance =  y_distance*grid_scale;
+% %                 
+% %                 
+% %                 %## calculate sigma y and sigma z ##%
+% %                 
+% %                   %sigma_y = a*x^0.894; a depend on wheather conditions
+% %                   % for now I choose stability category C (see presentation)
+% %                   a = obj.configFile.STABILITY_PARAMETER_a;
+% %                   c = obj.configFile.STABILITY_PARAMETER_c;
+% %                   d = obj.configFile.STABILITY_PARAMETER_d;
+% %                   f = obj.configFile.STABILITY_PARAMETER_f;
+% %                   
+% %                   
+% %                    sigma_y =  a*x_distance_kilometers^0.894; 
+% %                    %sigma_z = c*x^d + f; c,d,f depends on wheather conditions                 
+% %                    sigma_z = c*x_distance_kilometers^d + f; 
+% %                 
+% %                 
+% %                
+% %  
+% % %                 expy = exp(-(y_distance^2)/(2*sigma_y^2));
+% % 
+% % %                 expH = exp(-(He^2)/(2*sigma_z^2));
+% % %                 windParam = (U*sigma_y*sigma_z*pi);
+% %                 
+% %                 %Q = (C*windParam)/(expy* expH);
+% %                 Q = C*(U*sigma_y*sigma_z*pi)/(exp(-(y_distance^2)/(2*sigma_y^2))*exp(-(He^2)/(2*sigma_z^2)));
+% %                 
+% %             % end of function    
+% %             end
             
             
             % calculate the sensor concentration level based on given

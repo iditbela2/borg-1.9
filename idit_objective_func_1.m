@@ -24,7 +24,7 @@ if isempty(trueSensorReadings) % Initialization
     sensorArray = getSensorsLocations(n); %out of 104 options, get the locations
     
     % calculate true sensor readings based on true sensor arrays
-    [sensorArray, sourceArray, sizeOfStudyArea] = idit_CD1(Q_source, sensorArray); % the sensorArray is given to CD1 with locations only (NumOfSensx2) and is returned with values as well (NumOfSensx3)
+    [sensorArray, sourceArray, sizeOfStudyArea] = idit_CD1(Q_source, sensorArray, WD, WS); % the sensorArray is given to CD1 with locations only (NumOfSensx2) and is returned with values as well (NumOfSensx3)
     % try to understand what addGausienNoise gives me
     trueSensorReadings = sensorArray;
     PlotMap(sensorArray, sourceArray,sizeOfStudyArea);
@@ -38,7 +38,7 @@ bias=0; % what is the meaning of bias?
 % Computes sensors reading using Asaf's function CD1. It needs
 % trueSensorReadings for the sensors locations
 
-[sensorArray, ~, ~] = idit_CD1(x, trueSensorReadings);% in the trueSensorReadings we have the location of the sources, so this is the reason we send it to CD1
+[sensorArray, ~, ~] = idit_CD1(x, trueSensorReadings, WD, WS);% in the trueSensorReadings we have the location of the sources, so this is the reason we send it to CD1
 objs(1)=0;objs(2)=0;
 for i=1:size(sensorArray,1)    
     %objs(1)=objs(1)+((abs(sensorArray(i,3)-trueSensorReadings(i,3)))/(sensorArray(i,3)+trueSensorReadings(i,3)));
