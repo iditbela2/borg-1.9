@@ -46,6 +46,15 @@ VarUB=ones(1,NumOfSens); % the upper bounds of the decision variables
 [vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_2, NFE, eps, VarLB, VarUB);
 toc
 
+
+
+
+
+
+
+
+
+
 % look at results
 
 % option 1 - 
@@ -145,7 +154,7 @@ for i=1:sum(objsSorted(:,1)<=10)
 end
 
 % (3) run borg (idit_objective_func_1) to find emissions. calculate error rates for the different
-% number of sensors placed ?. 
+% number of sensors placed?. Not very interesting...
 clear all
 tic
 NumOfVars=5; % Number of sources (stacks)
@@ -165,5 +174,72 @@ VarUB=3.*VarMeans.*ones(1,NumOfVars); % the upper bounds of the decision variabl
 % @idit_objective_func_1 @idit_objective_func_2
 [vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_1, NFE, eps, VarLB, VarUB);
 toc
+
+
+
+
+
+
+
+%%%%% CHANGING WINDS %%%%
+
+% (1) only west winds 
+
+clc; close all; clear all;
+
+load('windfrequencies180.mat')
+global WF;
+
+% create a matrix of wind speeds and directions 
+[S,D] = meshgrid(1:16,190:10:360);
+% reshape windfrequencies180 to matrix 
+WF = reshape(windfrequencies180(:,4),[size(D)]);
+
+% number of sensors will equal the number of grid points every 10 meters
+% starting the x location of the source that is most on the right (east)
+% plus the minimal distance between two sources. 
+% sources locations
+sourceLocations(1,:) = [20, 300]; %first column X location, second column Y location
+sourceLocations(2,:) = [50,470];
+sourceLocations(3,:) = [70,60];
+sourceLocations(4,:) = [110,250];
+sourceLocations(5,:) = [160,520];
+configFile = Configuration;
+boundery = configFile.GRID_SIZE;
+
+stepSize = 50;
+minDist = min(pdist(sourceLocations(:,2))); % minimal distance in Y coordinate 
+NumOfSens = numel([max(sourceLocations(:,1)) + minDist:stepSize:boundery])*numel([0:stepSize:600]);
+[X,Y] = meshgrid([max(sourceLocations(:,1)) + minDist:stepSize:boundery],[0:stepSize:600]);
+
+% order of sensors (notice Y is zero on the top of matrix)
+sensorArray = zeros(NumOfSens,3); % first column x location, second y location, third measured values (currently 0).
+sensorArray(1:NumOfSens,1)=reshape(X,[size(X,1)*size(X,2),1]);
+sensorArray(1:NumOfSens,2)=reshape(Y,[size(Y,1)*size(Y,2),1]);
+
+% % % calculate sensor readings based on known Q_source 
+% % Q_source = [1000 1500 600 1900 300];
+% % [sensorArray, ~, ~] = idit_CD1(Q_source, sensorArray); 
+
+tic
+NumOfVars=NumOfSens; % Number of sensors
+NumOfObj=2; % Number of Objectives (least squares/bias/)
+NumOfCons=1; 
+NFE=5e3; %the number of objective function evaluations, defines how many times
+%  the Borg MOEA can invoke objectiveFcn.  Once the NFE limit is reached, the
+%  algorithm terminates and returns the result. 
+eps=[1 0.5e-2];
+ 
+VarMeans=[1000 1500 600 1900 300]; % annual mean values of the stacks
+% VarLB=[0*VarMeans 160 160 160 160 160 zeros(1,5).*20]; % the lower bounds of the decision variables
+% VarUB=[3*VarMeans ones(1,10).*580]; % the upper bounds of the decision variables
+VarLB=zeros(1,NumOfSens); % the lower bounds of the decision variables
+VarUB=ones(1,NumOfSens); % the upper bounds of the decision variables
+
+% @idit_objective_func_1 @idit_objective_func_2
+[vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_3, NFE, eps, VarLB, VarUB);
+toc
+
+
 
 

@@ -1,4 +1,4 @@
-function [min_PED] = PED_mean(Q_source, sensorArray_recieved)
+function [mean_PED] = PED_mean(Q_source, sensorArray_recieved, WD, WS)
 
 numOfSensors = size(sensorArray_recieved,1);
 % Run all 31 options of working/not working stacks (for 5 sources)
@@ -10,7 +10,7 @@ for scenario=1:31
     for stack=1:5
         active(stack) = mod(round(scenario/2^stack),2);
     end
-    [sensorArray, ~, ~] = idit_CD1(Q_source.*active, sensorArray_recieved); 
+    [sensorArray, ~, ~] = idit_CD1(Q_source.*active, sensorArray_recieved, WD, WS); 
     total_active(scenario) = sum(active);
     totalField(:,scenario) = sensorArray(:,3);
 end 

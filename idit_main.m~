@@ -46,6 +46,15 @@ VarUB=ones(1,NumOfSens); % the upper bounds of the decision variables
 [vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_2, NFE, eps, VarLB, VarUB);
 toc
 
+
+
+
+
+
+
+
+
+
 % look at results
 
 % option 1 - 
@@ -107,8 +116,8 @@ scatter(objs(:,1),-objs(:,2),'filled')
 title('Pareto front','fontsize',14)
 xl = xlabel('Number of sensors','fontsize',14);
 yl = ylabel('Minimal PED in each group of scenarios','fontsize',14);
-xl.Position(2) = -0.015;  % Shift x label down
-yl.Position(1) = 0.20;  % Shift y label left
+% xl.Position(2) = -0.015;  % Shift x label down
+% yl.Position(1) = 0.20;  % Shift y label left
 saveas(gcf,['results_pareto_front.png'])
 
 % (2) display also PED matrices for each solution up to 10 sensors
@@ -120,6 +129,7 @@ str_mean = strtrim(cellstr(num2str(VarMeans'))');
 [objsSorted,ind] = sortrows(objs);
 varsSorted = vars(ind,:);
 for i=1:sum(objsSorted(:,1)<=10)
+    close all
     subplot(1,2,1)
     plot(sourceLocations(:,1),sourceLocations(:,2),'ro')
     text(sourceLocations(:,1)+5,sourceLocations(:,2),str_mean)
@@ -131,7 +141,7 @@ for i=1:sum(objsSorted(:,1)<=10)
     plot(sensorLocations(:,1),sensorLocations(:,2),'bx')
     title(['PED = ' num2str(-objsSorted(i,2)) ', No of sensors: '  num2str(objsSorted(i,1))]);  
     subplot(1,2,2)
-    min_PED = PED_mean(Q_source, [sensorLocations(:,1),sensorLocations(:,2)]);
+    min_PED = PED_mean(Q_source, [sensorLocations(:,1),sensorLocations(:,2)]); %CHANGE PED_mean to return min
     out_min = accumarray([min_PED(:,1),min_PED(:,2)],min_PED(:,3),[5 5]);
     imagesc(out_min)
     colorbar
@@ -140,12 +150,11 @@ for i=1:sum(objsSorted(:,1)<=10)
     print -r500 % set resolution
     set(gcf, 'PaperUnits', 'centimeters','PaperPosition', [0 0 20 10]);%x_width=20cm y_width=10cm
     saveas(gcf,['results_' num2str(i) '.png'])
-    pause
+%     pause
 end
 
 % (3) run borg (idit_objective_func_1) to find emissions. calculate error rates for the different
-% number of sensors placed. 
-
+% number of sensors placed?. Not very interesting...
 clear all
 tic
 NumOfVars=5; % Number of sources (stacks)
@@ -166,6 +175,61 @@ VarUB=3.*VarMeans.*ones(1,NumOfVars); % the upper bounds of the decision variabl
 [vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_1, NFE, eps, VarLB, VarUB);
 toc
 
+
+
+
+
+
+
+%%%%% CHANGING WINDS %%%%
+
+clc; close all; clear all;
+ 
+% number of sensors will equal the number of grid points every 10 meters
+% starting the x location of the source that is most on the right (east)
+% plus the minimal distance between two sources. In addition, 
+
+% sources locations
+sourceLocations(1,:) = [20, 300]; %first column X location, second column Y location
+sourceLocations(2,:) = [50,470];
+sourceLocations(3,:) = [70,60];
+sourceLocations(4,:) = [110,250];
+sourceLocations(5,:) = [160,520];
+configFile = Configuration;
+boundery = configFile.GRID_SIZE;
+
+stepSize = 50;
+minDist = min(pdist(sourceLocations(:,2))); % minimal distance in Y coordinate 
+NumOfSens = numel([max(sourceLocations(:,1)) + minDist:stepSize:boundery])*numel([0:stepSize:600]);
+[X,Y] = meshgrid([max(sourceLocations(:,1)) + minDist:stepSize:boundery],[0:stepSize:600]);
+
+% order of sensors (notice Y is zero on the top of matrix)
+sensorArray = zeros(NumOfSens,3); % first column x location, second y location, third measured values (currently 0).
+sensorArray(1:NumOfSens,1)=reshape(X,[size(X,1)*size(X,2),1]);
+sensorArray(1:NumOfSens,2)=reshape(Y,[size(Y,1)*size(Y,2),1]);
+
+% % % calculate sensor readings based on known Q_source 
+% % Q_source = [1000 1500 600 1900 300];
+% % [sensorArray, ~, ~] = idit_CD1(Q_source, sensorArray); 
+
+tic
+NumOfVars=NumOfSens; % Number of sensors
+NumOfObj=2; % Number of Objectives (least squares/bias/)
+NumOfCons=1; 
+NFE=5e3; %the number of objective function evaluations, defines how many times
+%  the Borg MOEA can invoke objectiveFcn.  Once the NFE limit is reached, the
+%  algorithm terminates and returns the result. 
+eps=[1 0.5e-8];
+ 
+VarMeans=[1000 1500 600 1900 300]; % annual mean values of the stacks
+% VarLB=[0*VarMeans 160 160 160 160 160 zeros(1,5).*20]; % the lower bounds of the decision variables
+% VarUB=[3*VarMeans ones(1,10).*580]; % the upper bounds of the decision variables
+VarLB=zeros(1,NumOfSens); % the lower bounds of the decision variables
+VarUB=ones(1,NumOfSens); % the upper bounds of the decision variables
+
+% @idit_objective_func_1 @idit_objective_func_2
+[vars, objs, runtime] = borg(NumOfVars, NumOfObj, NumOfCons, @idit_objective_func_2, NFE, eps, VarLB, VarUB);
+toc
 
 
 

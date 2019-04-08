@@ -14,9 +14,9 @@ now1 = {'Start run on:', datestr(now)};
 svAPI = API;
 svAPI.configFile.WIND_DIRECTION = WD;
 svAPI.configFile.WIND_SPEED = WS;
-% configFile = Configuration;
+configFile = Configuration;
 
-% sizeOfStudyArea = configFile.GRID_SIZE;
+sizeOfStudyArea = configFile.GRID_SIZE;
 
 % Source locations
 x_source1 = 20;
